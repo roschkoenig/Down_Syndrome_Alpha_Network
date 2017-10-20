@@ -20,11 +20,12 @@ DCM = [];
 %--------------------------------------------------------------------------
 DCM.xY.Dfile                            = [Fdata fs sub];
 fixvol                                  = load(DCM.xY.Dfile);
-fullspmpath                             = which('spm');
-fixvol.D.other.inv{end}.forward.vol     = [fullspmpath(1:end-6) fs 'canonical' fs 'single_subj_T1_EEG_BEM.mat'];
-
-D = fixvol.D;
-save(DCM.xY.Dfile, 'D');
+if isfield(fixvol.D.other, 'inv')
+    fullspmpath                             = which('spm');
+    fixvol.D.other.inv{end}.forward.vol     = [fullspmpath(1:end-6) fs 'canonical' fs 'single_subj_T1_EEG_BEM.mat'];
+    D = fixvol.D;
+    save(DCM.xY.Dfile, 'D');
+end
 
 % Load MEEG object and extract sampling rate and info
 %--------------------------------------------------------------------------
@@ -46,7 +47,7 @@ DCM.options.Nmodes  = 8;          	% cosine reduction components used
 DCM.options.han     = 0;         	% no hanning 
 
 DCM.options.location = 1;           % optmise location 
-DCM.options.trials   = 2;           % index of ERPs within file
+DCM.options.trials   = length(condlist(MEEG));    % index of ERPs within file
 
 DCM.Sname           = {'lVI1', 'rVI1', 'lSPL', 'rSPL', 'lMFG', 'rMFG'};
 DCM.Lpos            = [[-16; -92; 0] [12; -92; 21] [-48; -56; 52] [34; -51; 39] [-46; 37; 16] [46; 18; 21]];

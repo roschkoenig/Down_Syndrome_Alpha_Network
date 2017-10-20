@@ -23,15 +23,17 @@ clear X Kbit Age
 
 % Effects of age and kbit and session number
 %--------------------------------------------------------------------------
+clear obs pre
 for aa = 1:length(ACM)  
     dotpos      = find(ACM{aa}.name == '.');
     seppos      = find(ACM{aa}.name == '/');
     if isempty(seppos), seppos = find(ACM{aa}.name == '\'); end
     if isempty(dotpos), dotpos = length(ACM{aa}.name) + 1; end
     
-    astring{aa} = ACM{aa}.name(seppos(end)+5 : dotpos(end)-1);
+    astring{aa} = ACM{aa}.name(seppos(end)+5 : dotpos(end)-1);     
 end
 
+%%
 for pp = 1:length(p)
     pstring = p{pp}.name;
     aindx   = find(strcmp(pstring, astring));
@@ -107,6 +109,7 @@ subplot(2,1,1)
     
 subplot(2,1,2)
     bar(spm_softmax(F'));
+    
 %% Perform Bayesian model average at second level and extract reduced models
 %==========================================================================
 clear M
@@ -114,6 +117,11 @@ M.X         = X;
 [REB RCM]   = spm_dcm_peb(ACM', M, C{iF});
 BMA         = spm_dcm_peb_bmc(PEB{iF});
 save([Fdcm fs 'Reduced_Models'], 'RCM');
+
+figure
+E = REB.Ep;
+C = spm_unvec(diag(REB.Cp), REB.Ep);
+spm_plot_ci(E(:,1),C(:,1));
 %%
 clear g
 p = ds_definefiles(Fbase);
@@ -129,62 +137,7 @@ subplot(2,1,1)
 scatter(kbit, mean(g(:,1:2),2), [], 'filled'); hold on
 subplot(2,1,2)
 scatter(kbit, mean(g(:,5:6),2), [], 'filled');
-%% Plotting parameter changes per region
-%==========================================================================
-% Extract parameter estimates and covariances from reduced model
-%--------------------------------------------------------------------------
-Cp = diag(BMA.Cp);
-Ep = BMA.Ep;
 
-% Plot parameter changes for each region
-%--------------------------------------------------------------------------
-for r = 1:6
-rid = [];
-
-% Identify indices from specified region from PEB
-%--------------------------------------------------------------------------
-for p = 1:length(PEB{iF}.Pnames)
-    if ~isempty(findstr(PEB{iF}.Pnames{p}, ['G(' num2str(r) ',']));
-        rid = [rid, p];
-    end
-end
-
-R{r} = rid;
-end
-
-% Define order for plotting of parameters
-%--------------------------------------------------------------------------
-pid = {[1 2 5], [3 4 6]};   % mod(sp, ii, ss); exc(ss>ii, dp>ii, ss>sp); 
-
-for e = 1:2
-for r = 1:length(R)
-
-Np  = length(PEB{iF}.Pnames);
-mod = R{r}(pid{1});
-exc = R{r}(pid{2});
-id = [mod + (e-1)*Np, exc + (e-1)*Np];
-
-figure(e)
-subplot(3,2,r)
-spm_plot_ci(Ep(id), Cp(id));
-title([BMA.Xnames{e} ' effect in ' ACM{1}.Sname{r}]);
-set(gca, 'XTickLabel', {BMA.Pnames{mod}, BMA.Pnames{exc}});
-
-end
-end
-
-for e = 1:2
-for sp = 1:3
-    
-figure(e)
-subplot(3,2, 2*sp-1),   yl(1,:) = ylim;
-subplot(3,2, 2*sp),     yl(2,:) = ylim;
-
-subplot(3,2, 2*sp-1),   ylim([min(yl(:,1)), max(yl(:,2))]);
-subplot(3,2, 2*sp),     ylim([min(yl(:,1)), max(yl(:,2))]);
-
-end
-end
 
 
 %% This is where code goes to die
@@ -217,3 +170,76 @@ end
 % C{end+1} = {Gtyp{2}{:}, Gtyp{3}{:}};
 % 
 % Cnames = {'Ext', 'F', 'B', 'M', 'T', 'Mod', 'Inh', 'Exc', 'M/Exc', 'Mod/Exc', 'Exc/Inh', 'all'};
+
+
+
+% %% Plotting parameter changes per region
+% %==========================================================================
+% % Extract parameter estimates and covariances from reduced model
+% %--------------------------------------------------------------------------
+% Cp = diag(BMA.Cp);
+% Ep = BMA.Ep;
+% 
+% % Plot parameter changes for each region
+% %--------------------------------------------------------------------------
+% for r = 1:6
+% rid = [];
+% 
+% % Identify indices from specified region from PEB
+% %--------------------------------------------------------------------------
+% for p = 1:length(PEB{iF}.Pnames)
+%     if ~isempty(findstr(PEB{iF}.Pnames{p}, ['G(' num2str(r) ',']));
+%         rid = [rid, p];
+%     end
+% end
+% 
+% R{r} = rid;
+% end
+% 
+% % Define order for plotting of parameters
+% %--------------------------------------------------------------------------
+% pid = {[1 2 5], [3 4 6]};   % mod(sp, ii, ss); exc(ss>ii, dp>ii, ss>sp); 
+% 
+% for e = 1:2
+% for r = 1:length(R)
+% 
+% Np  = length(PEB{iF}.Pnames);
+% mod = R{r}(pid{1});
+% exc = R{r}(pid{2});
+% id = [mod + (e-1)*Np, exc + (e-1)*Np];
+% 
+% figure(e)
+% subplot(3,2,r)
+% spm_plot_ci(Ep(id), Cp(id));
+% title([BMA.Xnames{e} ' effect in ' ACM{1}.Sname{r}]);
+% set(gca, 'XTickLabel', {BMA.Pnames{mod}, BMA.Pnames{exc}});
+% 
+% end
+% end
+% 
+% for e = 1:2
+% for sp = 1:3
+%     
+% figure(e)
+% subplot(3,2, 2*sp-1),   yl(1,:) = ylim;
+% subplot(3,2, 2*sp),     yl(2,:) = ylim;
+% 
+% subplot(3,2, 2*sp-1),   ylim([min(yl(:,1)), max(yl(:,2))]);
+% subplot(3,2, 2*sp),     ylim([min(yl(:,1)), max(yl(:,2))]);
+% 
+% end
+% end
+
+
+%     
+%     for m = 1:3
+%         obs(aa,m,:) = abs(squeeze(ACM{aa}.xY.y{1}(:,m,m)));
+%         pre(aa,m,:) = abs(squeeze(ACM{aa}.Hc{1}(:,m,m)));
+%     end
+%     
+%     cols = flip(cbrewer('qual', 'Paired', 6));
+%     subplot(ceil(length(ACM)/3), 3, aa)
+%     for m = 1:3
+%         plot(squeeze(obs(aa,m,:)), 'color', cols(2*m,:), 'Linewidth', 2), hold on
+%         plot(squeeze(pre(aa,m,:)), 'color', cols(2*(m-1) + 1,:))
+%     end

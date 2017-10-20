@@ -9,6 +9,7 @@ Fdata       = D.Fdata;
 Fdcm        = D.Fdcm;
 p           = ds_definefiles(Fbase);
 
+clear DCM
 for i = 1:length(p)
     sub     = p{i}.name;
     DCM{i}  = ds_dcm(sub, Fanalysis);
